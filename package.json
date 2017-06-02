@@ -1,0 +1,9 @@
+{
+  "name": "github-jira-connector",
+  "repository": "https://github.com/TopOPPS/jira-integrations/",
+  "description": "Jira and Github connector for TopOPPS organization."
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3"
+  }
+}
