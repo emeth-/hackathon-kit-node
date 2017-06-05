@@ -4,6 +4,9 @@
   "description": "Jira and Github connector for TopOPPS organization.",
   "dependencies": {
     "body-parser": "^1.17.2",
-    "express": "^4.15.3"
+    "github-webhook-handler": "^0.6.0",
+    "http": "0.0.0",
+    "request": "^2.81.0",
+    "underscore": "^1.8.3"
   }
 }
