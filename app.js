@@ -1,35 +1,60 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-// var app = express();
-var github = require('./github');
+/*
+  TOPOPPS' internal Jira / Github integration.
+
+  jira webhooks:
+  /issue - triggers on ISSUE create, update, delete
+
+  github webhooks:
+  /gh-pr-update - triggers on PULL REQUEST create, update, delete
+*/
+
+var ghAuthToken = process.env.gh_token,
+    ghUser = process.env.gh_user,
+    ghSecret = process.env.gh_secret;
+
+var jiraUser = process.env.jira_user,
+    jiraPassword = process.env.jira_password;
+
 var request = require('request');
 var http = require('http');
 var createRQHandler = require('./rq');
-var createHandler = require('github-webhook-handler')
-var githubPullRequestHandler = createHandler({ path: '/gh-pr-update', secret: '' })
+var createHandler = require('github-webhook-handler');
+var githubPullRequestHandler = createHandler({ path: '/gh-pr-update', secret: ghSecret });
 var jiraWebhookHandler = createRQHandler({ path: '/issue' });
 var _ = require('underscore');
+
+var githubJiraLabels = [
+    'Completed',
+    'Merge to Production',
+    'Project Manager Review',
+    'Stakeholder Review',
+    'Merge to Staging',
+    'Demo',
+    'Merge To Dev',
+    'Pending Assignment',
+    'In_Development'
+];
 
 http.createServer(function (req, res) {
     var url = req.url.split('?')[0];
     if (url === '/gh-pr-update') {
         githubPullRequestHandler(req, res, function (err) {
-            res.statusCode = 404
-            res.end('no such location')
-        })
+            res.statusCode = 404;
+            res.end('no such location');
+        });
     } else if (url === '/issue') {
         jiraWebhookHandler(req, res, function (err) {
-            res.statusCode = 404
-            res.end('no such location')
-        })
+            res.statusCode = 404;
+            res.end('no such location');
+        });
     } else {
-        //wut
+        //wut this is spam
     }
 }).listen(8081);
 
 githubPullRequestHandler.on('pull_request', function (data) {
     if (data.payload) {
-        console.log('webhook caught from github for pullRequest: ', data.payload.pull_request.html_url);
+        console.log('webhook caught from github for Pull Request: ', data.payload.pull_request.html_url);
         var matches = data.payload.pull_request.title.match(/TOP\-\d{1,}/g);
         if (matches !== null) {
             _.each(matches, function (match) {
@@ -41,67 +66,60 @@ githubPullRequestHandler.on('pull_request', function (data) {
 
 jiraWebhookHandler.on('jira-issue', function (data) {
     console.log('* caught', arguments);
-    _.each(data.data.changelog.items, function (change) {
-        debugger;
-        if (change.field === 'status') {
-            if (change.fromString === 'Merge To Dev' && change.toString === 'Project Manager Review') {
-                //make call to pull request to set dev label on it
-            } else if (change.fromString === 'Merge to Staging' && change.toString === 'Stakeholder Review') {
-                //make call to pull request to set staging label on it
-            } else if (change.fromString === 'Merge to Production' && change.toString === 'Completed') {
-                //prod case
+    var labelsToAdd = [];
+    if (data.data.changelog) {
+        _.each(data.data.changelog.items, function (change) {
+            if (change.field === 'status') {
+                labelsToAdd.push(change.toString);
+                // if (change.fromString === 'Merge To Dev' && change.toString === 'Project Manager Review') {
+                //     labelsToAdd.push('On Dev');
+                //     //make call to pull request to set dev label on it
+                // } else if (change.fromString === 'Merge to Staging' && change.toString === 'Stakeholder Review') {
+                //     labelsToAdd.push('On Staging');
+                //     //make call to pull request to set staging label on it
+                // } else if (change.fromString === 'Merge to Production' && change.toString === 'Completed') {
+                //     //prod case
+                // }
             }
-        }
-    });
+        });
+    }
+
+    var pr = data.data.issue.fields.customfield_10201;
+    if (pr && labelsToAdd) {
+        updateLabels(pr.split('/pull/')[1], labelsToAdd);
+    }
 });
 
-/*
-  TOPOPPS' internal Jira / Github integration.
 
-  jira webhooks:
-  /issue - triggers on ISSUE create, update, delete
-
-*/
-
-//
-// app.use( bodyParser.json() );
-//
-// app.post('/gh-pr-update',  function (req, res) {
-//     console.log(arguments);
-// });
-// app.post('/issue',  function (req, res) {
-//
-//     var rawData = req.body.issue;
-//     var action = req.body.issue_event_type_name;
-//     var issueData = {
-//         "issueId": rawData.key,
-//         "pullRequest": rawData.fields.customfield_10201,
-//         "status": rawData.fields.status.name
-//     };
-//
-//     github.repeat(issueData);
-//
-//     res.end("Success!");
-// });
-// const server = app.listen(8081);
-
-var user = '',
-    password = '',
-    secret = '';
-
-var getIssue = function (issueNumber) {
-    var options = {
-        type: 'GET',
-        url: 'https://topopps.atlassian.net/rest/api/2/issue/' + issueNumber,
+var updateLabels = function (prNumber, labelsToAdd) {
+    if (labelsToAdd.length === 0) {
+        return;
+    }
+    var getLabelsOptions = {
+        method: 'GET',
+        url: 'https://api.github.com/repos/TopOPPS/topopps-web/issues/' + prNumber + '/labels',
         headers: {
-            'Authorization': 'Basic ' + new Buffer(user + ':' + password).toString('base64'),
-            'Content-Type': 'application/json'
+            'Authorization': 'Basic ' + new Buffer(ghUser + ':' + ghAuthToken).toString('base64'),
+            'user-agent': 'node.js'
         }
     };
-    request(options, function (error, response, body) {
+    var setLabelsOptions = _.extend({}, getLabelsOptions);
+    setLabelsOptions.method = 'PUT';
+    request(getLabelsOptions, function (error, response, body) {
+        console.log('PR', prNumber, 'has these labels:', body);
         if (!error && response.statusCode == 200) {
-            debugger;
-            console.log('there', arguments);
+            //remove any jira labels from existing pull request labels
+            var labels = JSON.parse(body);
+            labels = _.difference(_.pluck(labels, 'name'), githubJiraLabels);
+            setLabelsOptions.body = labels.concat(labelsToAdd);
+            setLabelsOptions.json = true;
+
+            console.log('PR', prNumber, 'getting these labels:', setLabelsOptions.body);
+            request(setLabelsOptions, function (err, res, bod) {
+                if (!err && res.statusCode == 204) {
+                    console.log('gh set labels back', arguments);
+                }
+            });
         }
     });
 };
@@ -125,7 +143,7 @@ var updateIssue = function (issueNumber, value) {
         json: true,
         url: 'https://topopps.atlassian.net/rest/api/2/issue/' + issueNumber,
         headers: {
-            'Authorization': 'Basic ' + new Buffer(user + ':' + password).toString('base64'),
+            'Authorization': 'Basic ' + new Buffer(jiraUser + ':' + jiraPassword).toString('base64'),
             'Content-Type': 'application/json'
         },
         body: {
@@ -135,11 +153,9 @@ var updateIssue = function (issueNumber, value) {
         }
     };
     request(options, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode == 204) {
             console.log('there', arguments);
         }
     });
-}
+};
 console.log('here');
-//
-// getIssue('TOP-66');
