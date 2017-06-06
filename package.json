@@ -1,12 +1,15 @@
 {
-  "name": "github-jira-connector",
-  "repository": "https://github.com/TopOPPS/jira-integrations/",
-  "description": "Jira and Github connector for TopOPPS organization.",
-  "dependencies": {
-    "body-parser": "^1.17.2",
-    "github-webhook-handler": "^0.6.0",
-    "http": "0.0.0",
-    "request": "^2.81.0",
-    "underscore": "^1.8.3"
-  }
+    "name": "github-jira-connector",
+    "repository": "https://github.com/TopOPPS/jira-integrations/",
+    "description": "Jira and Github connector for TopOPPS organization.",
+    "dependencies": {
+        "body-parser": "^1.17.2",
+        "github-webhook-handler": "^0.6.0",
+        "http": "0.0.0",
+        "request": "^2.81.0",
+        "underscore": "^1.8.3"
+    },
+    "scripts": {
+        "start": "node app.js"
+    }
 }
