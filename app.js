@@ -7,13 +7,13 @@
   github webhooks:
   /gh-pr-update - triggers on PULL REQUEST create, update, delete
 */
+require('dotenv').config()
+var ghAuthToken = process.env.GH_TOKEN,
+    ghUser = process.env.GH_USER,
+    ghSecret = process.env.GH_SECRET;
 
-var ghAuthToken = process.env.gh_token,
-    ghUser = process.env.gh_user,
-    ghSecret = process.env.gh_secret;
-
-var jiraUser = process.env.jira_user,
-    jiraPassword = process.env.jira_password;
+var jiraUser = process.env.JIRA_USER,
+    jiraPassword = process.env.JIRA_PASSWORD;
 
 var request = require('request');
 var http = require('http');
@@ -63,7 +63,31 @@ githubPullRequestHandler.on('pull_request', function (data) {
         var matches = data.payload.pull_request.title.match(/TOP\-\d{1,}/g);
         if (matches !== null) {
             _.each(matches, function (match) {
-                updateIssue(match, data.payload.pull_request.html_url);
+                if (data.payload.pull_request.comments === 0) {
+                    //make call to pr and add comment,
+                    //updateIssue
+                    updateIssue(match, data.payload.pull_request.html_url);
+                    var commentOptions = {
+                        method: 'POST',
+                        url: 'https://api.github.com/repos/TopOPPS/topopps-web/issues/' + data.payload.pull_request.number + '/comments',
+                        headers: {
+                            'Authorization': 'Basic ' + new Buffer(ghUser + ':' + ghAuthToken).toString('base64'),
+                            'user-agent': 'node.js'
+                        },
+                        json: true,
+                        body: {
+                            body: 'https://topopps.atlassian.net/browse/' + match
+                        }
+                    };
+                    request(commentOptions, function (error, response, body) {
+                        if (!error && response.statusCode == 204) {
+                            console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', match);
+                        }
+                    });
+                } else {
+                    //there are comments, should we read them and check for ours?
+
+                }
             });
         }
     }
