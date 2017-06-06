@@ -50,7 +50,7 @@ http.createServer(function (req, res) {
     } else {
         //wut this is spam
     }
-}).listen(8081);
+}).listen(process.env.PORT || 8081);
 
 githubPullRequestHandler.on('pull_request', function (data) {
     if (data.payload) {
