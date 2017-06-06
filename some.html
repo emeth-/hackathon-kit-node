@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>It Works</title>
+        <style>
+            body {
+              background-color: black;
+              overflow: hidden;
+            }
+
+            .hexagon {
+              position: absolute;
+              left: 50%;
+              top: 50%;
+              overflow: hidden;
+              -webkit-transform: translate(-50%, -50%) rotate(0deg);
+                      transform: translate(-50%, -50%) rotate(0deg);
+              -webkit-animation: rotate 6s cubic-bezier(0.43, 1.24, 0.62, 0.87) infinite;
+                      animation: rotate 6s cubic-bezier(0.43, 1.24, 0.62, 0.87) infinite;
+            }
+            .hexagon:after {
+              content: "";
+              display: block;
+              width: 12vw;
+              height: 13.8492vw;
+              -webkit-clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+                      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+            }
+            .hexagon:nth-child(odd):after {
+              background-color: black;
+            }
+            .hexagon:nth-child(even):after {
+              background-color: white;
+            }
+
+            .hexagon:nth-child(1) {
+              z-index: 29;
+              zoom: 0.4;
+              -webkit-animation-delay: 0.02s;
+                      animation-delay: 0.02s;
+            }
+
+            .hexagon:nth-child(2) {
+              z-index: 28;
+              zoom: 0.8;
+              -webkit-animation-delay: 0.04s;
+                      animation-delay: 0.04s;
+            }
+
+            .hexagon:nth-child(3) {
+              z-index: 27;
+              zoom: 1.2;
+              -webkit-animation-delay: 0.06s;
+                      animation-delay: 0.06s;
+            }
+
+            .hexagon:nth-child(4) {
+              z-index: 26;
+              zoom: 1.6;
+              -webkit-animation-delay: 0.08s;
+                      animation-delay: 0.08s;
+            }
+
+            .hexagon:nth-child(5) {
+              z-index: 25;
+              zoom: 2;
+              -webkit-animation-delay: 0.1s;
+                      animation-delay: 0.1s;
+            }
+
+            .hexagon:nth-child(6) {
+              z-index: 24;
+              zoom: 2.4;
+              -webkit-animation-delay: 0.12s;
+                      animation-delay: 0.12s;
+            }
+
+            .hexagon:nth-child(7) {
+              z-index: 23;
+              zoom: 2.8;
+              -webkit-animation-delay: 0.14s;
+                      animation-delay: 0.14s;
+            }
+
+            .hexagon:nth-child(8) {
+              z-index: 22;
+              zoom: 3.2;
+              -webkit-animation-delay: 0.16s;
+                      animation-delay: 0.16s;
+            }
+
+            .hexagon:nth-child(9) {
+              z-index: 21;
+              zoom: 3.6;
+              -webkit-animation-delay: 0.18s;
+                      animation-delay: 0.18s;
+            }
+
+            .hexagon:nth-child(10) {
+              z-index: 20;
+              zoom: 4;
+              -webkit-animation-delay: 0.2s;
+                      animation-delay: 0.2s;
+            }
+
+            .hexagon:nth-child(11) {
+              z-index: 19;
+              zoom: 4.4;
+              -webkit-animation-delay: 0.22s;
+                      animation-delay: 0.22s;
+            }
+
+            .hexagon:nth-child(12) {
+              z-index: 18;
+              zoom: 4.8;
+              -webkit-animation-delay: 0.24s;
+                      animation-delay: 0.24s;
+            }
+
+            .hexagon:nth-child(13) {
+              z-index: 17;
+              zoom: 5.2;
+              -webkit-animation-delay: 0.26s;
+                      animation-delay: 0.26s;
+            }
+
+            .hexagon:nth-child(14) {
+              z-index: 16;
+              zoom: 5.6;
+              -webkit-animation-delay: 0.28s;
+                      animation-delay: 0.28s;
+            }
+
+            .hexagon:nth-child(15) {
+              z-index: 15;
+              zoom: 6;
+              -webkit-animation-delay: 0.3s;
+                      animation-delay: 0.3s;
+            }
+
+            .hexagon:nth-child(16) {
+              z-index: 14;
+              zoom: 6.4;
+              -webkit-animation-delay: 0.32s;
+                      animation-delay: 0.32s;
+            }
+
+            .hexagon:nth-child(17) {
+              z-index: 13;
+              zoom: 6.8;
+              -webkit-animation-delay: 0.34s;
+                      animation-delay: 0.34s;
+            }
+
+            .hexagon:nth-child(18) {
+              z-index: 12;
+              zoom: 7.2;
+              -webkit-animation-delay: 0.36s;
+                      animation-delay: 0.36s;
+            }
+
+            .hexagon:nth-child(19) {
+              z-index: 11;
+              zoom: 7.6;
+              -webkit-animation-delay: 0.38s;
+                      animation-delay: 0.38s;
+            }
+
+            .hexagon:nth-child(20) {
+              z-index: 10;
+              zoom: 8;
+              -webkit-animation-delay: 0.4s;
+                      animation-delay: 0.4s;
+            }
+
+            .hexagon:nth-child(21) {
+              z-index: 9;
+              zoom: 8.4;
+              -webkit-animation-delay: 0.42s;
+                      animation-delay: 0.42s;
+            }
+
+            .hexagon:nth-child(22) {
+              z-index: 8;
+              zoom: 8.8;
+              -webkit-animation-delay: 0.44s;
+                      animation-delay: 0.44s;
+            }
+
+            .hexagon:nth-child(23) {
+              z-index: 7;
+              zoom: 9.2;
+              -webkit-animation-delay: 0.46s;
+                      animation-delay: 0.46s;
+            }
+
+            .hexagon:nth-child(24) {
+              z-index: 6;
+              zoom: 9.6;
+              -webkit-animation-delay: 0.48s;
+                      animation-delay: 0.48s;
+            }
+
+            .hexagon:nth-child(25) {
+              z-index: 5;
+              zoom: 10;
+              -webkit-animation-delay: 0.5s;
+                      animation-delay: 0.5s;
+            }
+
+            .hexagon:nth-child(26) {
+              z-index: 4;
+              zoom: 10.4;
+              -webkit-animation-delay: 0.52s;
+                      animation-delay: 0.52s;
+            }
+
+            .hexagon:nth-child(27) {
+              z-index: 3;
+              zoom: 10.8;
+              -webkit-animation-delay: 0.54s;
+                      animation-delay: 0.54s;
+            }
+
+            .hexagon:nth-child(28) {
+              z-index: 2;
+              zoom: 11.2;
+              -webkit-animation-delay: 0.56s;
+                      animation-delay: 0.56s;
+            }
+
+            .hexagon:nth-child(29) {
+              z-index: 1;
+              zoom: 11.6;
+              -webkit-animation-delay: 0.58s;
+                      animation-delay: 0.58s;
+            }
+
+            .hexagon:nth-child(30) {
+              z-index: 0;
+              zoom: 12;
+              -webkit-animation-delay: 0.6s;
+                      animation-delay: 0.6s;
+            }
+
+            @-webkit-keyframes rotate {
+              0% {
+                -webkit-transform: translate(-50%, -50%) rotate(0deg);
+                        transform: translate(-50%, -50%) rotate(0deg);
+              }
+              16.66% {
+                -webkit-transform: translate(-50%, -50%) rotate(60deg);
+                        transform: translate(-50%, -50%) rotate(60deg);
+              }
+              33.32% {
+                -webkit-transform: translate(-50%, -50%) rotate(120deg);
+                        transform: translate(-50%, -50%) rotate(120deg);
+              }
+              49.98% {
+                -webkit-transform: translate(-50%, -50%) rotate(180deg);
+                        transform: translate(-50%, -50%) rotate(180deg);
+              }
+              66.64% {
+                -webkit-transform: translate(-50%, -50%) rotate(240deg);
+                        transform: translate(-50%, -50%) rotate(240deg);
+              }
+              83.3% {
+                -webkit-transform: translate(-50%, -50%) rotate(300deg);
+                        transform: translate(-50%, -50%) rotate(300deg);
+              }
+              99.96% {
+                -webkit-transform: translate(-50%, -50%) rotate(360deg);
+                        transform: translate(-50%, -50%) rotate(360deg);
+              }
+              100% {
+                -webkit-transform: translate(-50%, -50%) rotate(360deg);
+                        transform: translate(-50%, -50%) rotate(360deg);
+              }
+            }
+
+            @keyframes rotate {
+              0% {
+                -webkit-transform: translate(-50%, -50%) rotate(0deg);
+                        transform: translate(-50%, -50%) rotate(0deg);
+              }
+              16.66% {
+                -webkit-transform: translate(-50%, -50%) rotate(60deg);
+                        transform: translate(-50%, -50%) rotate(60deg);
+              }
+              33.32% {
+                -webkit-transform: translate(-50%, -50%) rotate(120deg);
+                        transform: translate(-50%, -50%) rotate(120deg);
+              }
+              49.98% {
+                -webkit-transform: translate(-50%, -50%) rotate(180deg);
+                        transform: translate(-50%, -50%) rotate(180deg);
+              }
+              66.64% {
+                -webkit-transform: translate(-50%, -50%) rotate(240deg);
+                        transform: translate(-50%, -50%) rotate(240deg);
+              }
+              83.3% {
+                -webkit-transform: translate(-50%, -50%) rotate(300deg);
+                        transform: translate(-50%, -50%) rotate(300deg);
+              }
+              99.96% {
+                -webkit-transform: translate(-50%, -50%) rotate(360deg);
+                        transform: translate(-50%, -50%) rotate(360deg);
+              }
+              100% {
+                -webkit-transform: translate(-50%, -50%) rotate(360deg);
+                        transform: translate(-50%, -50%) rotate(360deg);
+              }
+            }
+
+        </style>
+    </head>
+    <body>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+        <div class='hexagon'></div>
+    </body>
+</html>

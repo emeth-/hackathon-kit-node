@@ -49,11 +49,10 @@ http.createServer(function (req, res) {
             res.end('no such location');
         });
     } else {
-        fs.readFile('./some.html', function (err, html) {
-            res.writeHeader(200, {"Content-Type": "text/html"});
-            res.write(html);
-            res.end();
-        });
+        var html = fs.readFileSync('./some.html');
+        res.writeHeader(200, {"Content-Type": "text/html"});
+        res.write(html);
+        res.end();
         //wut this is spam
     }
 }).listen(process.env.PORT || 8081);
