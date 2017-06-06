@@ -7,8 +7,10 @@
   github webhooks:
   /gh-pr-update - triggers on PULL REQUEST create, update, delete
 */
+console.log(process.env.IS_LOCAL);
 if (process.env.IS_LOCAL == 1) {
-    require('dotenv').config()
+    console.log('loagins dotenv');
+    require('dotenv').config();
 }
 var ghAuthToken = process.env.GH_TOKEN,
     ghUser = process.env.GH_USER,
@@ -17,6 +19,7 @@ var ghAuthToken = process.env.GH_TOKEN,
 var jiraUser = process.env.JIRA_USER,
     jiraPassword = process.env.JIRA_PASSWORD;
 
+console.log(ghSecret, ghUser, ghAuthToken);
 var request = require('request');
 var http = require('http');
 var fs = require('fs');
