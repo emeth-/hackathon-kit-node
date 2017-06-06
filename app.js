@@ -48,6 +48,9 @@ http.createServer(function (req, res) {
             res.end('no such location');
         });
     } else {
+        res.writeHeader(200, {"Content-Type": "text/html"});
+        res.write('<h4>This thing is on</h4>');
+        res.end();
         //wut this is spam
     }
 }).listen(process.env.PORT || 8081);
