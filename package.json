@@ -7,12 +7,10 @@
     "github-webhook-handler": "^0.6.0",
     "http": "0.0.0",
     "request": "^2.81.0",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "dotenv": "^4.0.0"
   },
   "scripts": {
     "start": "node app.js"
-  },
-  "devDependencies": {
-    "dotenv": "^4.0.0"
   }
 }
