@@ -17,6 +17,7 @@ var jiraUser = process.env.jira_user,
 
 var request = require('request');
 var http = require('http');
+var fs = require('fs');
 var createRQHandler = require('./rq');
 var createHandler = require('github-webhook-handler');
 var githubPullRequestHandler = createHandler({ path: '/gh-pr-update', secret: ghSecret });
@@ -48,9 +49,11 @@ http.createServer(function (req, res) {
             res.end('no such location');
         });
     } else {
-        res.writeHeader(200, {"Content-Type": "text/html"});
-        res.write('<h4>This thing is on</h4>');
-        res.end();
+        fs.readFile('./some.html', function (err, html) {
+            res.writeHeader(200, {"Content-Type": "text/html"});
+            res.write(html);
+            res.end();
+        });
         //wut this is spam
     }
 }).listen(process.env.PORT || 8081);
