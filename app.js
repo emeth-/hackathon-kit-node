@@ -7,9 +7,7 @@
   github webhooks:
   /gh-pr-update - triggers on PULL REQUEST create, update, delete
 */
-console.log(process.env.IS_LOCAL);
 if (process.env.IS_LOCAL == 1) {
-    console.log('loagins dotenv');
     require('dotenv').config();
 }
 var ghAuthToken = process.env.GH_TOKEN,
@@ -19,7 +17,6 @@ var ghAuthToken = process.env.GH_TOKEN,
 var jiraUser = process.env.JIRA_USER,
     jiraPassword = process.env.JIRA_PASSWORD;
 
-console.log(ghSecret, ghUser, ghAuthToken);
 var request = require('request');
 var http = require('http');
 var fs = require('fs');
@@ -111,7 +108,7 @@ githubPullRequestHandler.on('pull_request', function (data) {
 });
 
 jiraWebhookHandler.on('jira-issue', function (data) {
-    console.log('* caught', arguments);
+    console.log('webhook caught from JIRA for issue', data.data.issue.fields.id);
     var labelsToAdd = [];
     if (data.data.changelog) {
         _.each(data.data.changelog.items, function (change) {
@@ -228,4 +225,4 @@ var getIssue = function (issueNumber, callback) {
         }
     });
 };
-console.log('here');
+console.log('App initialized');
