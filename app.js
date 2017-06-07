@@ -150,9 +150,10 @@ var updateLabels = function (prNumber, labelsToAdd) {
 
             console.log('PR', prNumber, 'getting these labels:', setLabelsOptions.body);
             request(setLabelsOptions, function (err, res, bod) {
-                console.log(res.statusCode);
-                if (!err && res.statusCode == 204) {
-                    console.log('gh set labels back', arguments);
+                if (!err && res.statusCode == 200) {
+                    console.log('PR', prNumber, 'Set Labels SUCCESS', setLabelsOptions.body);
+                } else {
+                    console.log('PR', prNumber, 'Set Labels ERROR', err, body);
                 }
             });
         }
