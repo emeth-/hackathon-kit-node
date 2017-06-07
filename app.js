@@ -70,8 +70,11 @@ githubPullRequestHandler.on('pull_request', function (data) {
             _.each(matches, function (match) {
                 if (data.payload.pull_request.comments === 0) {
                     //make call to pr and add comment,
-                    //updateIssue
+
+                    //make sure pr link is on JIRA issue
                     updateIssue(match, data.payload.pull_request.html_url);
+
+                    //comment JIRA issue url on pr
                     var commentOptions = {
                         method: 'POST',
                         url: 'https://api.github.com/repos/TopOPPS/topopps-web/issues/' + data.payload.pull_request.number + '/comments',
@@ -87,6 +90,13 @@ githubPullRequestHandler.on('pull_request', function (data) {
                     request(commentOptions, function (error, response, body) {
                         if (!error && response.statusCode == 204) {
                             console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', match);
+                        }
+                    });
+
+                    //get issue from JIRA, ensure JIRA issue initial status set on pr label
+                    getIssue(match, function (payload) {
+                        if (payload.fields.status.name) {
+                            updateLabels(data.payload.pull_request.number, [payload.fields.status.name]);
                         }
                     });
                 } else {
@@ -194,4 +204,22 @@ var updateIssue = function (issueNumber, value) {
         }
     });
 };
+var getIssue = function (issueNumber, callback) {
+    var options = {
+        method: 'GET',
+        json: true,
+        url: 'https://topopps.atlassian.net/rest/api/2/issue/' + issueNumber,
+        headers: {
+            'Authorization': 'Basic ' + new Buffer(jiraUser + ':' + jiraPassword).toString('base64'),
+            'Content-Type': 'application/json'
+        }
+    };
+    request(options, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            if (typeof callback === 'function') {
+                callback(body);
+            }
+        }
+    });
+}
 console.log('here');
