@@ -108,6 +108,7 @@ githubPullRequestHandler.on('pull_request', function (data) {
 });
 
 jiraWebhookHandler.on('jira-issue', function (data) {
+    console.log(data.data.issue.fields, _.keys(data.data.issue.fields))
     console.log('webhook caught from JIRA for issue', data.data.issue.fields.id);
     var labelsToAdd = [];
     if (data.data.changelog) {
