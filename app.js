@@ -200,7 +200,7 @@ var updateIssue = function (issueNumber, value) {
     };
     request(options, function (error, response, body) {
         if (!error && response.statusCode == 204) {
-            console.log('there', arguments);
+            console.log('there', body, body.changelog.items[0].field);
         }
     });
 };
@@ -221,5 +221,5 @@ var getIssue = function (issueNumber, callback) {
             }
         }
     });
-}
+};
 console.log('here');
