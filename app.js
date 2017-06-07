@@ -90,6 +90,8 @@ githubPullRequestHandler.on('pull_request', function (data) {
                     request(commentOptions, function (error, response, body) {
                         if (!error && response.statusCode == 204) {
                             console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', match);
+                        } else {
+                            console.log(response.statusCode, body);
                         }
                     });
 
@@ -201,6 +203,8 @@ var updateIssue = function (issueNumber, value) {
     request(options, function (error, response, body) {
         if (!error && response.statusCode == 204) {
             console.log('there', body, body.changelog.items[0].field);
+        } else {
+            console.log(response.statusCode, body);
         }
     });
 };
@@ -219,6 +223,8 @@ var getIssue = function (issueNumber, callback) {
             if (typeof callback === 'function') {
                 callback(body);
             }
+        } else {
+            console.log(response.statusCode, body);
         }
     });
 };
