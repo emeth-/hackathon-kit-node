@@ -199,7 +199,7 @@ var updateIssue = function (issueNumber, value) {
     };
     request(options, function (error, response, body) {
         if (!error && response.statusCode == 204) {
-            console.log('there', body, body.changelog.items[0].field);
+            console.log('JIRA issue updated', bodyw, value);
         } else {
             console.log(response.statusCode, body);
         }
