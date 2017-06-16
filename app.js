@@ -70,27 +70,7 @@ githubPullRequestHandler.on('pull_request', function (data) {
 
                     //make sure pr link is on JIRA issue
                     updateIssue(match, data.payload.pull_request.html_url);
-
-                    //comment JIRA issue url on pr
-                    var commentOptions = {
-                        method: 'POST',
-                        url: 'https://api.github.com/repos/TopOPPS/topopps-web/issues/' + data.payload.pull_request.number + '/comments',
-                        headers: {
-                            'Authorization': 'Basic ' + new Buffer(ghUser + ':' + ghAuthToken).toString('base64'),
-                            'user-agent': 'node.js'
-                        },
-                        json: true,
-                        body: {
-                            body: 'https://topopps.atlassian.net/browse/' + match
-                        }
-                    };
-                    request(commentOptions, function (error, response, body) {
-                        if (!error && response.statusCode == 204) {
-                            console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', match);
-                        } else {
-                            console.log(response.statusCode, body);
-                        }
-                    });
+                    addPullRequestComment(match, data.payload.pull_request.number, 'https://topopps.atlassian.net/browse/' + match);
 
                     //get issue from JIRA, ensure JIRA issue initial status set on pr label
                     getIssue(match, function (payload) {
@@ -133,6 +113,28 @@ jiraWebhookHandler.on('jira-issue', function (data) {
     }
 });
 
+var addPullRequestComment = function (issueId, prNumber, message) {
+    //comment JIRA issue url on pr
+    var commentOptions = {
+        method: 'POST',
+        url: 'https://api.github.com/repos/TopOPPS/topopps-web/issues/' + prNumber + '/comments',
+        headers: {
+            'Authorization': 'Basic ' + new Buffer(ghUser + ':' + ghAuthToken).toString('base64'),
+            'user-agent': 'node.js'
+        },
+        json: true,
+        body: {
+            body: message
+        }
+    };
+    request(commentOptions, function (error, response, body) {
+        if (!error && response.statusCode == 204) {
+            console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', issueId);
+        } else {
+            console.log(response.statusCode, body);
+        }
+    });
+};
 
 var updateLabels = function (prNumber, labelsToAdd) {
     if (labelsToAdd.length === 0) {
@@ -161,6 +163,7 @@ var updateLabels = function (prNumber, labelsToAdd) {
             request(setLabelsOptions, function (err, res, bod) {
                 if (!err && res.statusCode == 200) {
                     console.log('PR', prNumber, 'Set Labels SUCCESS', setLabelsOptions.body);
+                    addPullRequestComment('', prNumber, 'GOT these labels:', setLabelsOptions.body);
                 } else {
                     console.log('PR', prNumber, 'Set Labels ERROR', err, body);
                 }
