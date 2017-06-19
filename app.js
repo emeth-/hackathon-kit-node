@@ -163,7 +163,7 @@ var updateLabels = function (prNumber, labelsToAdd) {
             request(setLabelsOptions, function (err, res, bod) {
                 if (!err && res.statusCode == 200) {
                     console.log('PR', prNumber, 'Set Labels SUCCESS', setLabelsOptions.body);
-                    addPullRequestComment('', prNumber, 'GOT these labels:', JSON.stringify(setLabelsOptions.body));
+                    addPullRequestComment('', prNumber, 'GOT these labels:' + JSON.stringify(setLabelsOptions.body));
                 } else {
                     console.log('PR', prNumber, 'Set Labels ERROR', err, body);
                 }
