@@ -35,7 +35,8 @@ var githubJiraLabels = [
     'Demo',
     'Merge To Dev',
     'Pending Assignment',
-    'In_Development'
+    'In_Development',
+    'Define Request'
 ];
 
 http.createServer(function (req, res) {
@@ -151,11 +152,11 @@ var updateLabels = function (prNumber, labelsToAdd) {
     var setLabelsOptions = _.extend({}, getLabelsOptions);
     setLabelsOptions.method = 'PUT';
     request(getLabelsOptions, function (error, response, body) {
-        console.log('PR', prNumber, 'has these labels:', body);
         if (!error && response.statusCode == 200) {
             //remove any jira labels from existing pull request labels
             var labels = JSON.parse(body);
             labels = _.difference(_.pluck(labels, 'name'), githubJiraLabels);
+            console.log('PR', prNumber, 'has these labels:', labels);
             setLabelsOptions.body = labels.concat(labelsToAdd);
             setLabelsOptions.json = true;
 
