@@ -95,6 +95,10 @@ jiraWebhookHandler.on('jira-issue', function (data) {
         _.each(data.data.changelog.items, function (change) {
             if (change.field === 'status') {
                 labelsToAdd.push(change.toString);
+                if (change.fromString === 'Merge to Production' && change.toString === 'Completed') {
+                    console.log('Updating Resolution for JIRA issue', data.data.issue.key);
+                    updateIssue(data.data.issue.key, 'Done', 'resolution');
+                }
                 // if (change.fromString === 'Merge To Dev' && change.toString === 'Project Manager Review') {
                 //     labelsToAdd.push('On Dev');
                 //     //make call to pull request to set dev label on it
@@ -173,7 +177,7 @@ var updateLabels = function (prNumber, labelsToAdd) {
     });
 };
 
-var updateIssue = function (issueNumber, value) {
+var updateIssue = function (issueNumber, value, field) {
     /*
     curl -D- -u fred:fred -X PUT --data {see below} -H "Content-Type: application/json" http://kelpie9:8081/rest/api/2/issue/QA-31
 
@@ -196,12 +200,15 @@ var updateIssue = function (issueNumber, value) {
             'Content-Type': 'application/json'
         },
         body: {
-            fields: {
-                customfield_10201: value
-            }
+            fields: {}
         }
     };
-    console.log('JIRA issue update request', issueNumber, value)
+    if (field) {
+        options.body.fields[field] = {name: value};
+    } else {
+        options.body.fields.customfield_10201 = value;
+    }
+    console.log('JIRA issue update request', issueNumber, value, field);
     request(options, function (error, response, body) {
         if (!error && response.statusCode == 204) {
             console.log('JIRA issue updated', body, value);
@@ -230,4 +237,27 @@ var getIssue = function (issueNumber, callback) {
         }
     });
 };
+// var getIssueMeta = function () {
+//     var options = {
+//         method: 'GET',
+//         json: true,
+//         url: 'https://topopps.atlassian.net/rest/api/2/issue/TOP-13/editmeta',
+//         headers: {
+//             'Authorization': 'Basic ' + new Buffer(jiraUser + ':' + jiraPassword).toString('base64'),
+//             'Content-Type': 'application/json'
+//         }
+//     };
+//     request(options, function (error, response, body) {
+//         if (!error && response.statusCode == 200) {
+//             console.log(body)
+//             if (typeof callback === 'function') {
+//                 console.log(body)
+//                 callback(body);
+//             }
+//         } else {
+//             console.log(response.statusCode, body);
+//         }
+//     });
+// };
+// getIssueMeta();
 console.log('App initialized');
