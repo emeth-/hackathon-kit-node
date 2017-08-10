@@ -17,10 +17,13 @@ var ghAuthToken = process.env.GH_TOKEN,
 var jiraUser = process.env.JIRA_USER,
     jiraPassword = process.env.JIRA_PASSWORD;
 
+var slackToken = process.env.SLACK_TOKEN;
+
 var request = require('request');
 var http = require('http');
 var fs = require('fs');
 var createRQHandler = require('./rq');
+var querystring = require('querystring');
 var createHandler = require('github-webhook-handler');
 var githubPullRequestHandler = createHandler({ path: '/gh-pr-update', secret: ghSecret });
 var jiraWebhookHandler = createRQHandler({ path: '/issue' });
@@ -51,6 +54,34 @@ http.createServer(function (req, res) {
             res.statusCode = 404;
             res.end('no such location');
         });
+    } else if (url === '/create-pr') {
+        if (req.method == 'POST') {
+            var jsonString = '';
+            req.on('data', function (data) {
+                var actualData = querystring.parse(data.toString());
+                if (actualData.token !== slackToken) {
+                    res.writeHeader(401, {'Content-Type': 'application/json'});
+                    res.end();
+                }
+                createPullRequest(actualData.text, function (prUrl) {
+                    if (typeof prUrl === typeof {}) {
+                        res.writeHeader(422, {'Content-Type': 'application/json'});
+                        res.write(JSON.stringify({
+                            'text': 'Error creating PR'
+                        }));
+                        res.end();
+                        return;
+                    }
+                    console.log('here in callback', prUrl);
+                    res.writeHeader(200, {'Content-Type': 'application/json'});
+                    res.write(JSON.stringify({
+                        'text': 'Pull Request created! ' + prUrl
+                    }));
+                    res.end();
+                });
+            });
+        }
+        //wut this is spam
     } else {
         var html = fs.readFileSync('./some.html');
         res.writeHeader(200, {"Content-Type": "text/html"});
@@ -140,6 +171,40 @@ var addPullRequestComment = function (issueId, prNumber, message) {
         }
     });
 };
+
+var createPullRequest = function (feature, cb) {
+    var prOptions = {
+        method: 'POST',
+        url: 'https://api.github.com/repos/TopOPPS/topopps-web/pulls',
+        headers: {
+            'Authorization': 'Basic ' + new Buffer(ghUser + ':' + ghAuthToken).toString('base64'),
+            'user-agent': 'node.js',
+            'Content-Type': 'application/json;charset=UTF-8'
+        },
+        json: true,
+        body: {
+            "base": 'devprod',
+            "body": 'Feature going to devprod',
+            "title": 'Merging feature ' + feature + ' in to devprod',
+            "head": feature
+        }
+    };
+
+    request(prOptions, function (error, response, body) {
+        console.log(response.statusCode);
+        if (response.statusCode > 400) {
+            response.toJSON().body.errors;
+            cb(response.toJSON().body);
+        }
+        if (!error && response.statusCode == 201) {
+            console.log('success');
+            // console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', issueId);
+            cb(body.html_url);
+        } else {
+            console.log(response.statusCode, body);
+        }
+    });
+}
 
 var updateLabels = function (prNumber, labelsToAdd) {
     if (labelsToAdd.length === 0) {
