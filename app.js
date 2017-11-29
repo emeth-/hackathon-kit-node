@@ -17,6 +17,10 @@ var ghAuthToken = process.env.GH_TOKEN,
 var jiraUser = process.env.JIRA_USER,
     jiraPassword = process.env.JIRA_PASSWORD;
 
+var trelloKey = process.env.TRELLO_KEY,
+    trelloToken = process.env.TRELLO_TOKEN,
+    trelloUrlBase = process.env.TRELLO_URL_BASE || 'gh-jira-connector.herokuapp.com/';
+
 var slackToken = process.env.SLACK_TOKEN;
 
 var request = require('request');
@@ -31,15 +35,11 @@ var _ = require('underscore');
 
 var githubJiraLabels = [
     'Completed',
-    'Merge to Production',
-    'Project Manager Review',
+    'Merged to Production',
     'Stakeholder Review',
     'Merge to Staging',
-    'Demo',
-    'Merge To Dev',
-    'Pending Assignment',
-    'In_Development',
-    'Define Request'
+    'PM Review',
+    'In Development',
 ];
 
 http.createServer(function (req, res) {
@@ -49,11 +49,32 @@ http.createServer(function (req, res) {
             res.statusCode = 404;
             res.end('no such location');
         });
-    } else if (url === '/issue') {
-        jiraWebhookHandler(req, res, function (err) {
-            res.statusCode = 404;
-            res.end('no such location');
+    } else if (url === '/trello-move') {
+        req.on('data', function (data) {
+            var actualData = JSON.parse(data.toString());
+            console.log('TRELLO card moved', actualData.action.data.card.id, actualData.action.data.listAfter);
+            console.log(actualData);
+            console.log(actualData.action);
+            if (actualData.action.display.translationKey === 'action_move_card_from_list_to_list' &&
+                actualData.model.id === actualData.action.data.listAfter.id) {
+                getCardAttachments(actualData.action.data.card.id, function (error, response, body) {
+                    var attachments = response.toJSON().body;
+                    var pullRequestUrl = '';
+                    if (attachments) {
+                        _.each(attachments, function (attachment) {
+                            if (attachment.url.indexOf('https://github.com/TopOPPS/topopps-web/pull/') > -1) {
+                                //update pull request with label reflective of whatever move is being made
+                                // console.log(attachment);
+                                var pullRequestNumber = attachment.url.split('https://github.com/TopOPPS/topopps-web/pull/')[1];
+                                updateLabels(pullRequestNumber, [actualData.action.data.listAfter.name]);
+                            }
+                        });
+                    }
+                });
+            }
         });
+        res.writeHeader(200, {'Content-Type': 'application/json'});
+        res.end();
     } else if (url === '/create-pr') {
         if (req.method == 'POST') {
             var jsonString = '';
@@ -94,27 +115,23 @@ http.createServer(function (req, res) {
 githubPullRequestHandler.on('pull_request', function (data) {
     if (data.payload) {
         console.log('webhook caught from github for Pull Request: ', data.payload.pull_request.html_url);
-        var matches = data.payload.pull_request.title.match(/TOP\-\d{1,}/g);
+        var matches = data.payload.pull_request.title.match(/\-\-/g);
         if (matches !== null) {
-            _.each(matches, function (match) {
-                if (data.payload.pull_request.comments === 0) {
-                    //make call to pr and add comment,
-
-                    //make sure pr link is on JIRA issue
-                    updateIssue(match, data.payload.pull_request.html_url);
-                    addPullRequestComment(match, data.payload.pull_request.number, 'https://topopps.atlassian.net/browse/' + match);
-
-                    //get issue from JIRA, ensure JIRA issue initial status set on pr label
-                    getIssue(match, function (payload) {
-                        if (payload.fields.status.name) {
-                            updateLabels(data.payload.pull_request.number, [payload.fields.status.name]);
-                        }
+            var id = data.payload.pull_request.title.split('--')[0].trim();
+            if (data.payload.pull_request.comments === 0) {
+                console.log('Trello card', id, 'getting PR', data.payload.pull_request.number, 'attached');
+                addCardAttachment(id, data.payload.pull_request.html_url);
+                addPullRequestComment(id, data.payload.pull_request.number, 'https://trello.com/c/' + id);
+                getCard(id , function (error, response, body) {
+                    //find list that card is in
+                    getList(body.idList, function (er, res, bdy) {
+                        //update pull request to reflect card's current column's label
+                        updateLabels(data.payload.pull_request.number, [bdy.name]);
                     });
-                } else {
-                    //there are comments, should we read them and check for ours?
-
-                }
-            });
+                });
+            } else {
+                //there are comments, should we read them and check for ours?
+            }
         }
     }
 });
@@ -164,12 +181,89 @@ var addPullRequestComment = function (issueId, prNumber, message) {
         }
     };
     request(commentOptions, function (error, response, body) {
-        if (!error && response.statusCode == 204) {
-            console.log('Comment left on Pull Request', data.payload.pull_request.number, 'for JIRA issue', issueId);
+        if (!error && response.statusCode == 201) {
+            console.log('Comment left on Pull Request for TRELLO issue', issueId);
         } else {
             console.log(response.statusCode, body);
         }
     });
+};
+var addCardAttachment = function (id, pullRequestUrl, cb) {
+    var options = {
+        method: 'POST',
+        url: 'https://api.trello.com/1/cards/' + id + '/attachments?key=' + trelloKey + '&token=' + trelloToken + '&url=' + pullRequestUrl,
+        json: true
+    };
+    cb = cb || function () {};
+    request(options, cb);
+};
+var getCardAttachments = function (id, cb) {
+    var options = {
+        method: 'GET',
+        url: 'https://api.trello.com/1/cards/' + id + '/attachments?key=' + trelloKey + '&token=' + trelloToken,
+        headers: {
+            'user-agent': 'node.js'
+        },
+        json: true
+    };
+    cb = cb || function () {};
+    return request(options, cb);
+};
+var getCard = function (id, cb) {
+    var options = {
+        method: 'GET',
+        url: 'https://api.trello.com/1/cards/' + id + '?key=' + trelloKey + '&token=' + trelloToken,
+        headers: {
+            'user-agent': 'node.js'
+        },
+        json: true
+    };
+    cb = cb || function () {};
+    return request(options, cb);
+};
+var getList = function (id, cb) {
+    var options = {
+        method: 'GET',
+        url: 'https://api.trello.com/1/list/' + id + '?key=' + trelloKey + '&token=' + trelloToken,
+        headers: {
+            'user-agent': 'node.js'
+        },
+        json: true
+    };
+    cb = cb || function () {};
+    return request(options, cb);
+};
+var getWebhooks = function (update) {
+    var options = {
+        method: 'GET',
+        url: 'https://api.trello.com/1/members/me/tokens?webhooks=true&key=' + trelloKey + '&token=' + trelloToken,
+        headers: {
+            'user-agent': 'node.js',
+            'Content-Type': 'application/json;charset=UTF-8'
+        },
+        json: true,
+    };
+    request(options, function (error, response, body) {
+        var hooks = response.toJSON().body[0].webhooks;
+        console.log(response.statusCode, 'GOT Trello Webhooks', hooks);
+
+        if (hooks.length && update) {
+            _.each(hooks, function (hook) {
+                    var putOptions = {
+                        method: 'PUT',
+                        url: 'https://api.trello.com/1/webhooks/?active=true&idModel=' + hook.idModel + '&id=' + hook.id + '&callbackURL=' + trelloUrlBase + 'trello-move&key=' + trelloKey + '&token=' + trelloToken,
+                        headers: {
+                            'user-agent': 'node.js',
+                            'Content-Type': 'application/json;charset=UTF-8'
+                        },
+                    };
+                    request(putOptions, function (err, res, bdy) {
+                        console.log(res.statusCode, 'UPDATED Trello Webhook for ', hook.description, hook.id, 'callbackURL to:', trelloUrlBase);
+                    });
+            });
+        }
+    });
+    //https://api.trello.com/1/members/id/tokens
 };
 
 var createPullRequest = function (feature, cb) {
@@ -193,7 +287,7 @@ var createPullRequest = function (feature, cb) {
     request(prOptions, function (error, response, body) {
         console.log(response.statusCode);
         if (response.statusCode > 400) {
-            response.toJSON().body.errors;
+            //response.toJSON().body.errors;
             cb(response.toJSON().body);
         }
         if (!error && response.statusCode == 201) {
@@ -204,7 +298,7 @@ var createPullRequest = function (feature, cb) {
             console.log(response.statusCode, body);
         }
     });
-}
+};
 
 var updateLabels = function (prNumber, labelsToAdd) {
     if (labelsToAdd.length === 0) {
@@ -241,88 +335,6 @@ var updateLabels = function (prNumber, labelsToAdd) {
         }
     });
 };
-
-var updateIssue = function (issueNumber, value, field) {
-    /*
-    curl -D- -u fred:fred -X PUT --data {see below} -H "Content-Type: application/json" http://kelpie9:8081/rest/api/2/issue/QA-31
-
-    {
-        "fields" : {
-            "customfield_10200" :
-            {"value" : "Test 1"}
-            ,
-            "customfield_10201" :
-            {"value" : "Value 1"}
-        }
-    }
-    */
-    var options = {
-        method: 'PUT',
-        json: true,
-        url: 'https://topopps.atlassian.net/rest/api/2/issue/' + issueNumber,
-        headers: {
-            'Authorization': 'Basic ' + new Buffer(jiraUser + ':' + jiraPassword).toString('base64'),
-            'Content-Type': 'application/json'
-        },
-        body: {
-            fields: {}
-        }
-    };
-    if (field) {
-        options.body.fields[field] = {name: value};
-    } else {
-        options.body.fields.customfield_10201 = value;
-    }
-    console.log('JIRA issue update request', issueNumber, value, field);
-    request(options, function (error, response, body) {
-        if (!error && response.statusCode == 204) {
-            console.log('JIRA issue updated', body, value);
-        } else {
-            console.log(response.statusCode, body);
-        }
-    });
-};
-var getIssue = function (issueNumber, callback) {
-    var options = {
-        method: 'GET',
-        json: true,
-        url: 'https://topopps.atlassian.net/rest/api/2/issue/' + issueNumber,
-        headers: {
-            'Authorization': 'Basic ' + new Buffer(jiraUser + ':' + jiraPassword).toString('base64'),
-            'Content-Type': 'application/json'
-        }
-    };
-    request(options, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            if (typeof callback === 'function') {
-                callback(body);
-            }
-        } else {
-            console.log(response.statusCode, body);
-        }
-    });
-};
-// var getIssueMeta = function () {
-//     var options = {
-//         method: 'GET',
-//         json: true,
-//         url: 'https://topopps.atlassian.net/rest/api/2/issue/TOP-13/editmeta',
-//         headers: {
-//             'Authorization': 'Basic ' + new Buffer(jiraUser + ':' + jiraPassword).toString('base64'),
-//             'Content-Type': 'application/json'
-//         }
-//     };
-//     request(options, function (error, response, body) {
-//         if (!error && response.statusCode == 200) {
-//             console.log(body)
-//             if (typeof callback === 'function') {
-//                 console.log(body)
-//                 callback(body);
-//             }
-//         } else {
-//             console.log(response.statusCode, body);
-//         }
-//     });
-// };
-// getIssueMeta();
+getWebhooks(1);
+console.log(trelloUrlBase);
 console.log('App initialized');
