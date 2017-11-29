@@ -251,7 +251,7 @@ var getWebhooks = function (update) {
             _.each(hooks, function (hook) {
                     var putOptions = {
                         method: 'PUT',
-                        url: 'https://api.trello.com/1/webhooks/?active=true&idModel=' + hook.idModel + '&id=' + hook.id + '&callbackURL=' + trelloUrlBase + 'trello-move&key=' + trelloKey + '&token=' + trelloToken,
+                        url: 'https://api.trello.com/1/webhooks/?active=true&description=' + hook.description + '&idModel=' + hook.idModel + '&id=' + hook.id + '&callbackURL=' + trelloUrlBase + 'trello-move&key=' + trelloKey + '&token=' + trelloToken,
                         headers: {
                             'user-agent': 'node.js',
                             'Content-Type': 'application/json;charset=UTF-8'
